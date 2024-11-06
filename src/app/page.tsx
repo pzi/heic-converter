@@ -25,7 +25,6 @@ export default function Home() {
     const files = event.target.files;
 
     if (!files || files.length === 0) {
-      alert("No files!");
       return;
     }
 
