@@ -1,11 +1,20 @@
 "use client";
-
 import * as React from "react";
+import Image from "next/image";
 
 export default function Home() {
   const [worker, setWorker] = React.useState<Worker | null>(null);
   const [loading, setLoading] = React.useState(false);
-  const [image, setImage] = React.useState<string | undefined>(undefined)
+  const [image, setImage] = React.useState<
+    | {
+        data: string;
+        name: string;
+        width: number;
+        height: number;
+        originalName: string;
+      }
+    | undefined
+  >(undefined);
 
   React.useEffect(() => {
     let myWorker: Worker | undefined;
@@ -36,7 +45,7 @@ export default function Home() {
 
       worker.onmessage = async (event) => {
         if (event.data.type === "CONVERTING") {
-          setImage(undefined)
+          setImage(undefined);
           setLoading(true);
           return;
         } else {
@@ -47,8 +56,15 @@ export default function Home() {
         const imageData = event.data.convertedFiles[0];
 
         const reader = new FileReader();
-        reader.onload = () => setImage(reader.result as string);
-        reader.readAsDataURL(imageData.imageBlob);
+        reader.onload = () =>
+          setImage({
+            data: reader.result as string,
+            name: imageData.name,
+            width: imageData.width,
+            height: imageData.height,
+            originalName: imageData.originalName,
+          });
+        reader.readAsDataURL(imageData.blob);
       };
     }
 
@@ -61,7 +77,16 @@ export default function Home() {
         <h1 className="font-bold text-2xl">HEIC {"->"} JPG Converter</h1>
         <input type="file" onChange={handleChange} accept=".heic" />
         {loading ? <span>Converting...</span> : null}
-        {image ? <img src={image} alt='' /> : null}
+        {image ? (
+          <a href={image.data} download={image.name}>
+            <Image
+              src={image.data}
+              width={image.width}
+              height={image.height}
+              alt={`Converted copy of '${image.originalName}'`}
+            />
+          </a>
+        ) : null}
       </main>
     </div>
   );

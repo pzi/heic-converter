@@ -63,7 +63,7 @@ self.addEventListener("message", async (event) => {
       // const jpegDataUrl = canvas.toDataURL("image/jpeg");
       console.log(blob);
 
-      convertedFiles.push({ imageBlob: blob, width, height });
+      convertedFiles.push({ blob, width, height, name: `${file.name}.jpg`, originalName: file.name });
 
       self.postMessage({ type: "SUCCESS", convertedFiles });
     } catch (error) {
