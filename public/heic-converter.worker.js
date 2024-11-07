@@ -11,9 +11,7 @@ function copyData(dataContainer, image) {
 }
 
 self.addEventListener("message", async (event) => {
-  console.log("message received:", typeof event.data);
-
-  // console.log({libheif})
+  console.log("message received:", event);
 
   if (typeof event.data === "object") {
     const files = event.data.files;
@@ -61,7 +59,7 @@ self.addEventListener("message", async (event) => {
       // }), 'image/jpeg', 0.8)
 
       // const jpegDataUrl = canvas.toDataURL("image/jpeg");
-      console.log(blob);
+      console.log(blob, URL.createObjectURL(blob));
 
       convertedFiles.push({ blob, width, height, name: `${file.name}.jpg`, originalName: file.name });
 

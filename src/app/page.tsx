@@ -12,6 +12,7 @@ export default function Home() {
         width: number;
         height: number;
         originalName: string;
+        url: string;
       }
     | undefined
   >(undefined);
@@ -19,7 +20,7 @@ export default function Home() {
   React.useEffect(() => {
     let myWorker: Worker | undefined;
     if (window.Worker && !myWorker) {
-      myWorker = new Worker("./service-worker.js");
+      myWorker = new Worker("./heic-converter.worker.js");
       setWorker(myWorker);
     }
 
@@ -33,42 +34,40 @@ export default function Home() {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
 
-    if (!files || files.length === 0) {
+    if (!files || files.length === 0 || !worker) {
       return;
     }
 
-    if (worker) {
-      const canvas = document.createElement("canvas");
-      const offscreenCanvas = canvas.transferControlToOffscreen();
+    const canvas = document.createElement("canvas");
+    const offscreenCanvas = canvas.transferControlToOffscreen();
 
-      worker.postMessage({ files, canvas: offscreenCanvas }, [offscreenCanvas]);
+    worker.postMessage({ files, canvas: offscreenCanvas }, [offscreenCanvas]);
 
-      worker.onmessage = async (event) => {
-        if (event.data.type === "CONVERTING") {
-          setImage(undefined);
-          setLoading(true);
-          return;
-        } else {
-          setLoading(false);
-        }
+    worker.onmessage = async (event) => {
+      console.log(event.data);
 
-        console.log(event.data);
-        const imageData = event.data.convertedFiles[0];
+      if (event.data.type === "CONVERTING") {
+        setImage(undefined);
+        setLoading(true);
+        return;
+      } else {
+        setLoading(false);
+      }
 
-        const reader = new FileReader();
-        reader.onload = () =>
-          setImage({
-            data: reader.result as string,
-            name: imageData.name,
-            width: imageData.width,
-            height: imageData.height,
-            originalName: imageData.originalName,
-          });
-        reader.readAsDataURL(imageData.blob);
-      };
-    }
+      const imageData = event.data.convertedFiles[0];
 
-    console.log(files);
+      const reader = new FileReader();
+      reader.onload = () =>
+        setImage({
+          url: URL.createObjectURL(imageData.blob),
+          data: reader.result as string,
+          name: imageData.name,
+          width: imageData.width,
+          height: imageData.height,
+          originalName: imageData.originalName,
+        });
+      reader.readAsDataURL(imageData.blob);
+    };
   };
 
   return (
@@ -78,9 +77,9 @@ export default function Home() {
         <input type="file" onChange={handleChange} accept=".heic" />
         {loading ? <span>Converting...</span> : null}
         {image ? (
-          <a href={image.data} download={image.name}>
+          <a href={image.url} download={image.name}>
             <Image
-              src={image.data}
+              src={image.url}
               width={image.width}
               height={image.height}
               alt={`Converted copy of '${image.originalName}'`}
